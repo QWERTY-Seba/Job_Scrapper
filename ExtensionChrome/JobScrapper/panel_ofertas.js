@@ -1,5 +1,130 @@
 MAX_DATES_DISPLAYED = 40
 var BASE_DATA = {};
+var id_ventana_activa = 0 //Ventana se refiere a dashboard, donde se encontraran alojados los graficos
+var graficos_actuales = {}
+var secuencia_id_grafico = 0
+var id_grafico_focus = 0 
+var id_ultimo_panel_activo = 1
+var secuencia_panel = 1
+
+const tipos_graficos = {
+    Line : "Line",
+    Bar : "Bar",
+    Horizontal_Bar : "Horizontal Bar",
+    Pie : "Pie",
+    Doughnut : "Doughnut",
+    Polar_Area : "Polar",
+    Radar : "Radar",
+    Bubble : "Bubble",
+    Scatter : "Scatter"
+}
+
+//Cambiar a un panel mannager???
+function cambiar_panel(id){
+  let temp_div = document.querySelector(`.panel_sql[data-id="${id}"]`)
+  let last_active_panel = document.querySelector(`.panel_sql[data-id="${id_ultimo_panel_activo}"]`)
+  
+  last_active_panel.classList.remove("active")
+  temp_div.classList.add("active")
+  id_ultimo_panel_activo = id
+   
+}
+
+
+document.querySelectorAll('.boton_cambiar_panel').forEach(e => {
+  e.addEventListener('click', (ee) => {
+    cambiar_panel(e.getAttribute("data-link"))
+	})
+})
+
+function abrir_configuracion_grafico(id_grafico){
+    //Cargar datos en un div
+    console.log("grafico clickeado")
+    let grafico = graficos_actuales[id_grafico]
+    let sub_header_configuracion_grafico = document.querySelector('#sub_header_configuracion_grafico')
+    console.log(grafico)
+
+    
+    // sub_header_configuracion_grafico.children["option"].innerHTML = grafico["options"]
+    // sub_header_configuracion_grafico.children["config"].innerHTML = grafico["config"]
+    // sub_header_configuracion_grafico.children["listeners"].innerHTML = grafico["_listeners"]
+
+
+
+}
+
+const panel_graficos = document.getElementById('panel_graficos')
+
+document.querySelectorAll('button.boton_crear_grafico').forEach(el => {
+    el.addEventListener('click', (ev) => {
+        let temp_canvas = document.createElement('canvas') 
+        temp_canvas.id_grafico = secuencia_id_grafico        
+        temp_canvas.classList.add('grafico_vacio','grafico')
+        temp_canvas.tabIndex = 1
+
+        let contexto = temp_canvas.getContext("2d");
+
+        let tipo_grafico = el.attributes['tipo_grafico'].value
+
+        graficos_actuales[secuencia_id_grafico] = crear_grafico_vacio(contexto, tipo_grafico)
+
+        temp_canvas.onfocus = () => {abrir_configuracion_grafico(0)}
+        
+        panel_graficos.append(temp_canvas)
+        //Leer si hay una seleccion y traer datos
+        secuencia_id_grafico += 1
+        
+    })
+
+})
+
+function crear_grafico_vacio(contexto, tipo_grafico){
+    var data = {
+        labels: ["January", "February", "March", "April", "May", "June", "July"],
+        datasets: [
+            // invisible dataset
+            {
+                label: "",
+                fillColor: "rgba(220,220,220,0.0)",
+                strokeColor: "rgba(220,220,220,0)",
+                pointColor: "rgba(220,220,220,0)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(220,220,220,1)",
+                // change this data values according to the vertical scale
+                // you are looking for 
+                data: [65, 59, 80, 81, 56, 55, 40]
+            },
+            // your real chart here
+            {
+                label: "My dataset",
+                fillColor: "rgba(220,220,220,0.2)",
+                strokeColor: "rgba(220,220,220,1)",
+                pointColor: "rgba(220,220,220,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(220,220,220,1)",
+                data: []
+            }
+        ]
+    };
+    
+    var options = {
+        animation: false,
+        type : tipo_grafico,
+        data : data,
+        scaleShowGridLines : true,
+    
+        //Boolean - Whether to show vertical lines (except Y axis)
+        scaleShowVerticalLines: true,
+        
+        showTooltips: false
+    };
+    
+    return new Chart(contexto, options);
+    
+    
+}
 
 function getLastXDates(x) {
   let dates = {};
@@ -43,16 +168,18 @@ function crear_grafico(datos_fecha_registro){
             label: 'Ofertas No Descartadas',
             data: Object.entries(datos_fecha_registro).map(a => a[1].is_not_discarted),
             backgroundColor: 'rgb(75, 192, 192)',
+            stack : "background"
           },
           {
             label: 'Ofertas Descartadas',
             data: Object.entries(datos_fecha_registro).map(a => a[1].is_discarted),
             backgroundColor: 'rgb(255, 99, 132)',
+            stack : "background"
           }
         ]
       };
     
-     new Chart("myChart", {
+    const cchart = new Chart("myChart", {
         type: 'bar',
       data: data,
       options: {
@@ -64,19 +191,35 @@ function crear_grafico(datos_fecha_registro){
           y: {
             stacked: true
           }
+        },
+        onClick: (e) => {
+            var activePoints = cchart.getElementsAtEventForMode(e, 'point', cchart.options);
+            
+            if(activePoints.length == 0){
+                console.log("No se clickeo una barra del grafico")
+                return;
+            }
+            
+            var firstPoint = activePoints[0];
+            var label = firstPoint._xScale.ticks[firstPoint._index];
+            buscar_en_base("fecha_publicacion_conv", label)
+            
+
         }
       }
       });
 
 }
 
+//Filtrar la tabla a partir de los resultados que ya se estan mostrando
+function sobre_filtrar_tabla(){
 
-
+}
 
 function get_descartes_por_fecha(numero_dias){
     let datos_fecha_registro = getLastXDates(numero_dias)
     Object.entries(BASE_DATA).forEach(i => {
-        let date = new Date(i[1].fecha_recoleccion_registro).toISOString().split('T')[0]
+        let date = new Date(i[1].fecha_publicacion).toISOString().split('T')[0]
         let fecha_registro = datos_fecha_registro[date] 
         
         if(fecha_registro){
@@ -93,18 +236,85 @@ function get_descartes_por_fecha(numero_dias){
 }
 
 
+//Debe recibir una lista de atributos junto al objecto,
+// devuelve un div que contiene N cantidad de columnas iguales a la cantidad de atributos recibidos
 
+//Los elementos de la lista deberian poder recibir eventos como onclick, mostrar detalles de la oferta
+//Agregar imagenes a las ofertas, y que el nombre de la empresa aparesca en el hover de la imagen
+function objeto_a_filaTabla(objeto, lista_atributos){
+    let temp_elem = document.createElement('tr')
+    
+    for(let atributo of lista_atributos){
+        var sub_temp_elem = document.createElement('td');
+        sub_temp_elem.classList.add(`dato_tabla_${atributo}`);
+        sub_temp_elem.textContent = objeto[atributo];
+        
+        temp_elem.appendChild(sub_temp_elem);
+    }
+    return temp_elem
+}
+
+
+
+//Agregar criterios == != <= >= 
+function buscar_en_base(atributo, valor){
+
+        var resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
+      
+        //Transformar los objetos recibidos en un tipo de estructura que permita aplicar transformacion de datos mas facil
+        Object.entries(BASE_DATA).forEach(e => {
+          var cargo = e[1].cargo.toLowerCase();
+          var idOferta = e[1].id_oferta;
+          var empresa = e[1].empresa;
+          var localizacionEmpleo = e[1].localizacion_empleo;
+          var fechaPublicacion = e[1].fecha_publicacion;
+          
+          let temp_date = new Date(fechaPublicacion).toISOString().split('T')[0]
+
+          e[1]["fecha_publicacion_conv"] = temp_date
+
+
+          console.log("Buscando en base", atributo, valor, e[1][atributo])
+          //Hacer que se guarden multiples cambios mientras se mantenga el foco en el menu.
+          // luego apilar y aplicar cada cambio en los datos
+          if (e[1][atributo].includes(valor)) {
+            //Cambiar a una listbox estilo tabla dinamica excel
+            let lista_atributos = ["cargo", "id_oferta","empresa", "localizacion_empleo", "fecha_publicacion" ]
+            resultsDiv.appendChild(objeto_a_filaTabla(e[1], lista_atributos));
+
+          }
+        })
+            
+}
+
+
+function buscar_con_input(){
+    var searchInput = document.getElementById('search_input');
+    var searchTerm = searchInput.value.toLowerCase();
+    buscar_en_base("cargo", searchTerm)
+}
+
+
+var searchTimer = null;
+//Esto para hacer consultas cada N tiempo despues de dejar de escribir, asi evitar muchas queries
+function delayedSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(buscar_en_base, 500); // Adjust the delay time (in milliseconds) as needed
+}
+//Iterar base y extraer la estructura de datos base
 async function inicializar(){
     await chrome.storage.local.get().then((ofertas) => {
         Object.assign(BASE_DATA, ofertas)
+
+
     })
-    
+    document.querySelector("#search_button").onclick = buscar_con_input
+    document.querySelector("#search_input").oninput = delayedSearch
     crear_grafico(get_descartes_por_fecha(MAX_DATES_DISPLAYED))
 }
 
 inicializar()
-
-
 
 
 

@@ -1,11 +1,15 @@
+
 chrome.runtime.sendMessage({type : "ATTACH_DEBUGGER"})
 
+
+
+  
 
 var claseTestSeba = new class {
    
     divDescartados;
     divListaOfertas;
-    styleSheet; 
+     
     
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -16,12 +20,6 @@ var claseTestSeba = new class {
         this.divListaOfertas = document.querySelector('.scaffold-layout__list-container')
         this.divDescartados.style.border = '1px solid red'
         this.divDescartados.id = 'divDescartados_id'
-
-        //Buscar la hoja de css en la pagina
-        this.styleSheet = Array.from(document.styleSheets).find(e => e.href === null);
-        this.styleSheet.insertRule(`.job-card-container__apply-method > div, .job-card-list__insight > div {display : none}`)
-        this.styleSheet.insertRule(`.boton_descarte_oferta{position : absolute;top : 47px;right : 12px;}`)
-
 
         const max_tries = 50;
         var max_tries_iterador = 0
@@ -67,24 +65,6 @@ window.addEventListener("load", (event) => {
 });
 
 
-function AgregarBotonesDescarte(){
-    document.querySelectorAll('.jobs-search-results__list-item').forEach(e => {
-        let boton = document.createElement('button')
-        boton.classList += 'boton_descarte_oferta artdeco-button artdeco-button--circle artdeco-button--muted artdeco-button--1 artdeco-button--tertiary'
-        boton.innerHTML = 
-        `<li-icon aria-hidden="true" type="close" class="artdeco-button__icon" size="small"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" data-supported-dps="16x16" fill="currentColor" class="mercado-match" width="16" height="16" focusable="false">
-        <path d="M14 3.41L9.41 8 14 12.59 12.59 14 8 9.41 3.41 14 2 12.59 6.59 8 2 3.41 3.41 2 8 6.59 12.59 2z"></path>
-      </svg></li-icon>`
-
-
-        boton.onclick = function(){
-                            window.postMessage({type : "DESCARTAR_OFERTA",id_oferta : e.dataset.occludableJobId}) ;
-                            claseTestSeba.descartarOferta(e.dataset.occludableJobId)
-                        }
-        e.appendChild(boton)
-    })
-
-}
 
 window.addEventListener('message', function(event) {
     // Only accept messages from the same frame
@@ -98,3 +78,30 @@ window.addEventListener('message', function(event) {
     }
     chrome.runtime.sendMessage(event.data);
   });
+
+
+
+
+var pagina_actual_pool_elementos = []
+
+function buscar_div_por_idEmpleo(id_empleo){
+
+}
+
+
+/*
+etiqueta
+tipo descarte
+tecnologia dentro de oferta
+alguna de las variables destacadas, esta en ingles, salario, ubicacion etc.
+
+
+*/
+//Agregar detalles como cantidad de años requeridos, lenguaje requerido
+function agregar_etiqueta(){}
+//Agregar botones... o cualquier elemento de HTML interactivo, no css
+function agregar_interaccion(){}
+
+//Cambiar css de un elemento general, Li de la oferta
+function modificar_css(){}
+

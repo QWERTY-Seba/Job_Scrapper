@@ -4,10 +4,37 @@ DAO chrome storage
 
 */
 
+export function regex_pruba(){
+	let resultado_regex = 'id_oferta;resultado\n';
+let match;
+let regex = /\d{1,3}\s+((?:\w+\s*){1,8})/guim
+chrome.storage.local.get(null, lista => {
+    
+    Object.entries(lista).forEach(oferta => {
+        
+        while((match = regex.exec(oferta[1].descripcion_empleo) ) !== null){
+            let resultado = match[1]
+            resultado = resultado.replace(';',':')
+            resultado = resultado.replace('\n',' ')
+            resultado_regex = resultado_regex.concat(`${oferta[0]};${resultado}\n`)    
+        }
+        
+    })
+    console.log(resultado_regex)
+    
+    
+})
+}
+
+
 export function buscarOfertaPorId(id_oferta){
-	let oferta;
-	chrome.storage.local.get(id_oferta, oferta_almacenada => {
-		Object.assign(oferta, oferta_almacenada )
+	let oferta = {};
+	id_oferta = String(id_oferta)
+	chrome.storage.local.get(id_oferta).then((oferta_almacenada) => {
+		//Si no esta vacio, devuelvelo. Debido a los export hay que hacerlo asi	
+		if(Object.getOwnPropertyNames(oferta_almacenada).length > 0){
+			Object.assign(oferta, oferta_almacenada[id_oferta] )
+		}
 	})
 	return oferta;
 }
