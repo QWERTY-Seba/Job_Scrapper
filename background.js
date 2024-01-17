@@ -1,20 +1,23 @@
 import * as util from "./util.js"
 import * as util_html from "./util_html.js"
 import * as dao_almacenamiento from "./dao_almacenamiento.js"
+
+const etiquetas = {
+    DESCARTE : {
+        css: 'background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;',
+        icono : ''
+    },
+    ESPECIAL : {
+        css: 'background-color: #f8ca4d; color: #fff;',
+        icono : '<i class="fas fa-star" style="margin-right: 5px;"></i>'
+    }
+}
 //import * as cheerio from "./lib/cheerio"
 
+//AGREGAR SISTEMA DE PUNTAJES Y ORDENAR EN BASE A ESO
 
 var mb = 0
-
-var request_Almacenar = []
-var ventanas_attached = []
 var dias_expiracion = 30
-var cargos_baneados = ['cloud architect','back-end','front-end','android','node[.]js','[.]net','django','react[.]js','vue[.]js','front end','back end','devops','backend','frontend','intern[^a-zA-Z]','sr','senior','jefe','usd','oracle','lider[^a-zA-Z]','product owner','lead','practica[^a-zA-Z]','site reliability engineer','sre','software engineer','data scientist','fullstack','full stack','us[$]','scrum master']
-
-var lista_tecnologias = ['html', 'css', 'javascript', 'python', 'java', 'c++', 'sql', 'ruby', 'php', 'swift', 'kotlin', 'typescript', 'go', 'rust', 'perl', 'matlab', 'c#', 'scala', 'bash', 'shell scripting', 'node.js', 'react', 'angular', 'vue.js', 'django', 'flask', 'ruby on rails', 'spring framework', 'hibernate', 'express.js', 'flask restful', 'asp.net', '.net core', 'laravel', 'cakephp', 'symfony', 'yii', 'rubymotion', 'ionic', 'xamarin', 'android sdk', 'ios sdk', 'react native', 'unity', 'unreal engine', 'tensorflow', 'keras', 'pytorch', 'opencv', 'docker', 'kubernetes', 'amazon web services (aws)', 'microsoft azure', 'google cloud platform', 'heroku', 'digitalocean', 'git', 'svn', 'mercurial', 'jenkins', 'travis ci', 'circleci', 'jira', 'trello', 'asana', 'slack', 'zoom', 'skype', 'microsoft teams', 'google meet', 'zoom', 'postgresql', 'mysql', 'mongodb', 'sqlite', 'oracle', 'microsoft sql server', 'mariadb', 'redis', 'cassandra', 'neo4j', 'couchbase', 'apache kafka', 'rabbitmq', 'elasticsearch', 'logstash', 'kibana', 'grafana', 'prometheus', 'nagios', 'splunk', 'graylog', 'wireshark', 'nmap', 'metasploit', 'burp suite', 'owasp zap', 'hashcat', 'john the ripper', 'aircrack-ng']
-var empresas_descartar = ['braintrust','listopro']
-
-
 
 var reg = new RegExp(/\d+/)
 //var regex = /(?:al menos (?:de )?|entre )?(?:(\d)|(\d) [aoy] \d|(\d)-\d) a[ññ]{1,2}o[s]?(?:(?:(?: de)? experiencia)?)/guim;
@@ -53,7 +56,63 @@ var reg = new RegExp(/\d+/)
 
 // VERSION ANTERIOR /(?:entre |al menos |minimo |desde |experiencia )(?:de |de al menos |minima de )(?:\d{1,2}|\d{1,2}[aoy\- ]*\d{1,2}) ano[s]?(?: de experiencia(?: en el cargo| minima)?|en cargos similares)?|(?:entre |al menos |minimo |desde |experiencia )(?:de |de al menos |minima de )?(?:\d{1,2}|\d{1,2}[aoy\- ]*\d{1,2}) ano[s]? (?:de experiencia(?: en el cargo| minima)?|en cargos similares)/gmiu
 //(?:entre |al menos |minimo |desde |experiencia |)(?:de |de al menos |minima de |)?[+]?(\d{1,2})[aoy\- ]*(\d{1,2})? ano[s]?(?: de experiencia(?: en el cargo| minima|)?|en cargos similares)/gmiu
-var regex_experiencia_empleo = /(?:maximo |entre |al menos |minimo |desde |experiencia |)(?:de |de al menos |minima de |hasta )?[+]?(\d{1,2})[aoy\- ]*(\d{1,2})? ano[s]?(?: de experiencia(?: en el cargo| minima|)?| en cargos similares)/gmiu
+var regex_experiencia_empleo = /(?:maximo |entre |al menos |minimo |desde |experiencia |)(?:de |de al menos |minima de |hasta )?[+]?(\d{1,2})[aoy\- ]*(\d{1,2})? ano[s]?(?: de experiencia(?: en el cargo| minima|)?| en cargos similares| en \w+)/gmiu
+
+const GruposRegex = {
+	CARGO: { 
+		palabras : ['cloud architect','back-end','front-end','android','node.js','.net','django','react.js','vue.js','front end','back end','devops','backend','frontend','intern','sr','senior','jefe','usd','oracle','lider','product owner','lead','practica','site reliability engineer','sre','software engineer','data scientist','fullstack','full stack','us$','scrum master'] ,
+		regex : null
+	},
+	TECNOLOGIA: {
+		palabras : ['html', 'css', 'javascript', 'python', 'java', 'c++', 'sql', 'ruby', 'php', 'swift', 'kotlin', 'typescript', 'go', 'rust', 'perl', 'matlab', 'c#', 'scala', 'bash', 'shell scripting', 'node.js', 'react', 'angular', 'vue.js', 'django', 'flask', 'ruby on rails', 'spring framework', 'hibernate', 'express.js', 'flask restful', 'asp.net', '.net core', 'laravel', 'cakephp', 'symfony', 'yii', 'rubymotion', 'ionic', 'xamarin', 'android sdk', 'ios sdk', 'react native', 'unity', 'unreal engine', 'tensorflow', 'keras', 'pytorch', 'opencv', 'docker', 'kubernetes', 'amazon web services (aws)', 'microsoft azure', 'google cloud platform', 'heroku', 'digitalocean', 'git', 'svn', 'mercurial', 'jenkins', 'travis ci', 'circleci', 'jira', 'trello', 'asana', 'slack', 'zoom', 'skype', 'microsoft teams', 'google meet', 'zoom', 'postgresql', 'mysql', 'mongodb', 'sqlite', 'oracle', 'microsoft sql server', 'mariadb', 'redis', 'cassandra', 'neo4j', 'couchbase', 'apache kafka', 'rabbitmq', 'elasticsearch', 'logstash', 'kibana', 'grafana', 'prometheus', 'nagios', 'splunk', 'graylog', 'wireshark', 'nmap', 'metasploit', 'burp suite', 'owasp zap', 'hashcat', 'john the ripper', 'aircrack-ng'] ,
+		regex : null
+	},
+	EMPRESA: {
+		palabras : ['braintrust','listopro','turing','oowlish','fullStack labs'],
+		regex : null
+	},
+	BUSQUEDA: {
+		palabras : ['python','sql','excel','power bi'],
+		regex : null
+	}
+  };
+
+let regx =  {
+
+	createWordBoundaryRegex(list) {
+	  const escapedList = list.map(this.escapeRegexString);
+	  const regexString = `(?:${escapedList.join('|')})`;
+	  return new RegExp(regexString, 'gium');
+	}, 
+
+	escapeRegexString(str) {
+	  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	},
+	//se debe crear un nuevo objeto de regex para evitar errores https://stackoverflow.com/questions/4724701/regexp-exec-returns-null-sporadically
+	tiene_match_con_gruporegex(palabra, GrupoRegex) {
+		let temp_regex = new RegExp(GrupoRegex.regex)
+        return temp_regex.exec(palabra) != undefined
+	},
+
+	buscar_match_con_gruporegex(palabra, GrupoRegex){
+		let temp_regex = new RegExp(GrupoRegex.regex)
+    	return temp_regex.exec(palabra)
+	},
+	buscar_match(palabra, regex){
+		let respuesta = new RegExp(regex).exec(palabra)
+		if (respuesta) {
+			return respuesta[0]
+		}
+		return null
+	},
+
+	init(){
+		for (const o of Object.entries(GruposRegex)){
+			o[1].regex = this.createWordBoundaryRegex(o[1].palabras)
+		}
+	}
+}
+regx.init()
 
 async function trabajando(respuesta){
 	let tiempo_llamado = new Date().getTime()
@@ -112,19 +171,28 @@ async function Linkedin(respuesta, tabId) {
 		switch (fila.$type) {
 			case 'com.linkedin.voyager.dash.jobs.JobPosting':
 				id_oferta = reg.exec(fila.trackingUrn)[0]
-
-				let saltar_oferta = false;
+				console.debug("Oferta entrante",id_oferta)
+				let oferta_ya_existente = false;
 				let descartada = false;
 				await chrome.storage.local.get(id_oferta).then((oferta) => {
-					if (!util.objectoEstaVacio(oferta)) {
-						console.debug('oferta ya existente, saltando ', id_oferta)
-						saltar_oferta = true;
-						if (oferta[id_oferta].descartada) {
+					oferta_ya_existente = !util.objectoEstaVacio(oferta)
+					
+					if (oferta_ya_existente){
+						console.log('oferta ya existente, saltando ', id_oferta)
+						
+						if (oferta[id_oferta].oferta_descartada) {
 							descartada = true;
+							//Crear una funcion llamada __descartar_oferta que ejecute estas dos a la vez
 							chrome.scripting.executeScript({
 								target : {tabId : tabId} ,
 								func :  util_html.descartar_oferta,
 								args : [id_oferta]
+							})
+							console.debug("Agregando etiqueta a ", id_oferta)
+							chrome.scripting.executeScript({
+								target : {tabId : tabId} ,
+								func :  util_html.agregar_etiqueta,
+								args : [id_oferta,"tipo de descarte aca",etiquetas.DESCARTE]
 							})
 						}
 					}
@@ -132,12 +200,38 @@ async function Linkedin(respuesta, tabId) {
 				if(descartada){
 					break;
 				}
+
+
+				
+				
+				//Cambiar para que ciertos matches se tomen como validos, ejemplo: maximo 1 año..., hasta 1 año..., sin experiencia...
+				//Agregar busqueda de tecnologias deseadas, si la contiene agregarla como etiqueta sin texto con imagen, logo del lenguaje
 				//Ejecutar en cualquier oferta que no este descartada
+				
+				let descripcion_empleo = util.quitarAcentos(fila.description.text)
+					
 				let match;
-				let matches = []
+				let matches = new Set()
+				let ite = 0
+				while ((match = GruposRegex.BUSQUEDA.regex.exec(descripcion_empleo.toLowerCase())) !== null && ite < 10) {
+					console.log("probando busqueda")
+					matches.add(match[0])
+					ite += 1
+				}
+				matches.forEach(e => chrome.scripting.executeScript({
+					target : {tabId : tabId} ,
+					func :  util_html.agregar_etiqueta,
+					args : [id_oferta,e,etiquetas.ESPECIAL]
+				}))
+
+
+
+
+				match = undefined;
+				matches = []
 				let anos_requeridos = []
 				let HTML_Lista_Experiencia = "";
-				while ((match = regex_experiencia_empleo.exec(util.quitarAcentos(fila.description.text))) !== null) {
+				while ((match = regex_experiencia_empleo.exec(descripcion_empleo)) !== null) {
 					HTML_Lista_Experiencia += `<li class='job-card-list__insight' >${match[0]}</li>`
 					matches.push(match)
 					anos_requeridos.push(Number(match[1]))
@@ -145,11 +239,11 @@ async function Linkedin(respuesta, tabId) {
 						anos_requeridos.push(Number(match[2]))
 					}
 				}
-				if(matches.length > 0){
-					
+				
+				
+				if(matches.length > 0 ){
 					let experiencia_minima_cargo = Math.min(...anos_requeridos)
 					console.log("debug lista_experiencias",id_oferta,fila.title, HTML_Lista_Experiencia, " experiencia minima ", experiencia_minima_cargo)
-					
 					try{
 						chrome.scripting.executeScript({
 							target : {tabId : tabId} ,
@@ -160,8 +254,8 @@ async function Linkedin(respuesta, tabId) {
 						console.error(`Error al ejecutar insertarAñosExpDiv`, id_oferta , HTML_Lista_Experiencia,experiencia_minima_cargo, anos_requeridos  )						
 					}
 				}
-				
-				if (saltar_oferta) {
+				console.debug("oferta_ya_existente",oferta_ya_existente,id_oferta)
+				if(oferta_ya_existente) {
 					break;
 				}
 
@@ -175,7 +269,27 @@ async function Linkedin(respuesta, tabId) {
 					manual: false,
 					empresa: false
 				}
-				if (regx.cargo_baneado(fila.title)) {
+
+				let resp_esta_en_ingles = null;
+				try{
+					resp_esta_en_ingles = await chrome.i18n.detectLanguage(fila.description.text)
+					oferta_temp.esta_en_ingles = resp_esta_en_ingles.languages[0].language == 'en'
+
+
+					if(oferta_temp.esta_en_ingles){
+						chrome.scripting.executeScript({
+							target : {tabId : tabId} ,
+							func :  util_html.agregar_etiqueta,
+							args : [id_oferta,"Ingles",etiquetas.DESCARTE]
+						})
+					}
+				}catch(Error){
+					console.error('Error al detectar el idioma en la oferta ',id_oferta, Error,resp_esta_en_ingles, fila.description.text.length )
+				}
+
+				oferta_temp.cargo = util.quitarAcentos(fila.title)
+
+				if (regx.tiene_match_con_gruporegex(oferta_temp.cargo,GruposRegex.CARGO)) {
 					oferta_temp.tipo_descarte.cargo = true
 					oferta_temp.oferta_descartada = true
 					chrome.scripting.executeScript({
@@ -187,13 +301,13 @@ async function Linkedin(respuesta, tabId) {
 				}
 				
 				oferta_temp.id_oferta = id_oferta
-				oferta_temp.descripcion_empleo = util.quitarAcentos(fila.description.text)
+				oferta_temp.descripcion_empleo = descripcion_empleo
 				oferta_temp.pagina_recoleccion = "Linkedin"
-				oferta_temp.cargo = fila.title
 				oferta_temp.fecha_recoleccion_registro = tiempo_llamado
 				oferta_temp.experiencia_minima = [...matches]
 
 				Lista_oferta[id_oferta] = oferta_temp
+				console.debug("se guardo el objecto", oferta_temp, id_oferta)
 				
 				break;
 
@@ -203,10 +317,8 @@ async function Linkedin(respuesta, tabId) {
 				if (Lista_oferta[id_oferta] == null) {
 					await chrome.storage.local.get(id_oferta).then((oferta) => {
 						try {
-
-							
 							oferta[id_oferta].cantidad_solicitudes.push({
-								cantidad_solicitudes : regx.AciertosMatch(fila.primaryDescription.text, /(\d+)(?= solicitud)/),
+								cantidad_solicitudes : regx.buscar_match(fila.primaryDescription.text, /(\d+)(?= solicitud)/guim),
 								fecha_extraccion: tiempo_llamado
 							})
 						} catch (error) {
@@ -218,13 +330,29 @@ async function Linkedin(respuesta, tabId) {
 				}
 
 				try {
-					Lista_oferta[id_oferta].empresa = regx.AciertosMatch(fila.primaryDescription.text, /^([\s\.\wÀ-ÿ]*\b)/)
-					Lista_oferta[id_oferta].localizacion_empleo = regx.AciertosMatch(fila.primaryDescription.text, /(\b[\s\w,À-ÿ]*chile)/)
-					Lista_oferta[id_oferta].tipo_modalidad = regx.AciertosMatch(fila.primaryDescription.text, /(híbrido|remoto|presencial)/)
+					Lista_oferta[id_oferta].empresa = regx.buscar_match(fila.primaryDescription.text, /^([\s\.\wÀ-ÿ]*\b)/guim)
+					
+					//Problema aca, si llega la misma empresa dos veces no pesca una de las dos
+					console.debug("Probando regex empresa con", GruposRegex.EMPRESA.regex, id_oferta, Lista_oferta[id_oferta].empresa)
+					if(regx.tiene_match_con_gruporegex(Lista_oferta[id_oferta].empresa, GruposRegex.EMPRESA)){
+						console.debug("PASO")
+						Lista_oferta[id_oferta].oferta_descartada = true
+						Lista_oferta[id_oferta].tipo_descarte.empresa = true
+						
+						chrome.scripting.executeScript({
+							target : {tabId : tabId} ,
+							func :  util_html.descartar_oferta,
+							args : [id_oferta]
+						})
+					}
+					//AGREGAR CODIGO QUE REVICE Y MODIFIQUE LOS INDICES DE LOS PARAMETROS CUANDO SEAN ACTUALIZADOS EJ: fila.navigationBarSubtitle
+					Lista_oferta[id_oferta].localizacion_empleo = regx.buscar_match(fila.primaryDescription.text, /(\b[\s\w,À-ÿ]*chile)/guim)
+					console.log('QUe mierda pasa aca, ', regx.buscar_match(fila.navigationBarSubtitle, /(híbrido|remoto|presencial)/guim))
+					Lista_oferta[id_oferta].tipo_modalidad = regx.buscar_match(fila.navigationBarSubtitle, /(híbrido|remoto|presencial)/guim)
 
 					
 					Lista_oferta[id_oferta].cantidad_solicitudes = [{
-						cantidad_solicitudes: regx.AciertosMatch(fila.primaryDescription.text, /(\d+)(?= solicitud)/),
+						cantidad_solicitudes: regx.buscar_match(fila.primaryDescription.text, /(\d+)(?= solicitud)/guim),
 						fecha_extraccion: tiempo_llamado
 					}]
 
@@ -243,7 +371,7 @@ async function Linkedin(respuesta, tabId) {
 					Lista_oferta[id_oferta].tipo_jornada = util.getSafe(() => fila.jobInsightsV2ResolutionResults[0].insightViewModel.text.text, '')
 					
 					//aparece null cuando la compañia que publica la oferta no esta registrada
-					Lista_oferta[id_oferta].id_compania = regx.AciertosMatch(reg, fila.logo.attributes[0].detailData["*companyLogo"]) 
+					Lista_oferta[id_oferta].id_compania = regx.buscar_match(reg, fila.logo.attributes[0].detailData["*companyLogo"]) 
 				} catch (error) {
 					console.error(error, fila)
 				}
@@ -258,11 +386,13 @@ async function Linkedin(respuesta, tabId) {
 
 				break;
 			case 'com.linkedin.voyager.dash.organization.Company':
-				let resultado_regex_imagen = fila.logoResolutionResult.vectorImage.digitalmediaAsset.match(/urn:li:digitalmediaAsset:(.*)/ui)
-				if(!resultado_regex_imagen){
-					return;
-				}
-				var id_imagen = resultado_regex_imagen[1]
+				// let imagen = util.getSafe(fila.logoResolutionResult.vectorImage.digitalmediaAsset,null)
+				// if(imagen )
+				// let resultado_regex_imagen = fila.logoResolutionResult.vectorImage.digitalmediaAsset.match(/urn:li:digitalmediaAsset:(.*)/ui)
+				// if(!resultado_regex_imagen){
+				// 	return;
+				// }
+				// var id_imagen = resultado_regex_imagen[1]
 
 				
 
@@ -298,37 +428,94 @@ async function Linkedin(respuesta, tabId) {
 		target : {tabId : tabId} ,
 		func :  util_html.AgregarBotonesDescarte
 	})
-
+	chrome.scripting.executeScript({
+		target : {tabId : tabId} ,
+		func :  util_html.AgregarBotonesBusqueda
+	})
 	
 }
+
+var request_pendientes = new Map();
+const maxima_cantidad_intentos = 10
+
+async function Linkedin_preguntas_empleo(respuesta, tabId){
+	const resp = JSON.parse(respuesta.replaceAll("\n", "\\n"))
+	
+	let id_oferta = resp.data["*elements"][0].match(/\d+/)[0]
+	let preguntas = []
+
+	for(let comp of resp.included){
+		if(comp.$type != "com.linkedin.voyager.dash.common.forms.FormElement"){
+			continue;
+		}
+		if(["Código del país", "Email","Teléfono móvil"].includes(comp.title.text)){
+			continue;
+		}
+		preguntas.push(comp.title.text)
+	}
+
+	let oferta_no_llego = false
+	let temp_oferta = {}
+	let startTime = Date.now();
+    let timeoutDuration = 60000; // 1 minute in milliseconds
+    let interval = 10000; // 10 seconds in milliseconds
+
+	while(util.objectoEstaVacio(temp_oferta)){
+		if (Date.now() - startTime >= timeoutDuration) {
+            console.log(`Timeout: la oferta ${id_oferta} no se encontro, cancelando el guardado de preguntas`);
+			oferta_no_llego = true
+            break;
+        }
+		await new Promise(resolve => setTimeout(resolve, interval));
+	
+		await chrome.storage.local.get(id_oferta).then(
+			(oferta) => { Object.assign(temp_oferta, oferta)}
+		)
+	}
+
+	if(oferta_no_llego){
+		return;
+	}
+
+	chrome.storage.local.get(id_oferta).then((oferta) => {
+		try {
+			oferta[id_oferta].preguntas_empleo = structuredClone(preguntas)
+			chrome.storage.local.set(oferta)
+			console.log("Preguntas guardadas en", id_oferta)
+		} catch (error) {
+			console.error('Error en la asignacion de preguntas de empleo', preguntas, id_oferta, error)
+		}	
+	})
+}
+
 //URLS DE DONDE SE EXTRAEN LOS DATOS, POR SITIO Y POR TIPO DE PAGINA VISITADA
 var url_requests_ofertas = {
-    "www.linkedin.com" : [
-		{
-			url : "https://www.linkedin.com/voyager/api/graphql?variables=(jobCardPrefetchQuery",
-			func : Linkedin,
-			desc : "lista general de linkedin, www.linkedin.com/jobs/search "
-		},
-		{
-			url : "https://www.linkedin.com/voyager/api/voyagerJobsDashOnsiteApplyApplication",
-			func : test,
-			desc : "preguntas de empleo"
-		},
-		{
-			url : "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(jobCardPrefetchQuery",
-			func : test,
-			desc : "lista general con datos en cache",
-			no_body : true
-			
-		},
-		{
-			url : "https://www.linkedin.com/voyager/api/voyagerAssessmentsDashJobSkillMatchInsight/urn:li:fsd_jobSkillMatchInsight:3550873543?decorationId=com.linkedin.voyager.dash.deco.assessments.FullJobSkillMatchInsight-13",
-			func : test,
-			desc : "lista de aptitudes"
-		}
+    "www.linkedin.com" : 
+		 [
+			{
+				url : "https://www.linkedin.com/voyager/api/graphql?variables=(jobCardPrefetchQuery",
+				func : Linkedin,
+				desc : "lista general de linkedin, www.linkedin.com/jobs/search "
+			},
+			{
+				url : "https://www.linkedin.com/voyager/api/voyagerJobsDashOnsiteApplyApplication",
+				func : Linkedin_preguntas_empleo,
+				desc : "preguntas de empleo"
+			},
+			{
+				url : "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(jobCardPrefetchQuery",
+				func : test,
+				desc : "lista general con datos en cache",
+				no_body : true
+				
+			},
+			{
+				url : "https://www.linkedin.com/voyager/api/voyagerAssessmentsDashJobSkillMatchInsight/urn:li:fsd_jobSkillMatchInsight:3550873543?decorationId=com.linkedin.voyager.dash.deco.assessments.FullJobSkillMatchInsight-13",
+				func : test,
+				desc : "lista de aptitudes"
+			}
 
-
-	],
+		],
 	"cl.computrabajo.com" : [
 		{
 			url : "https://cl.computrabajo.com/trabajo-de-sql-en-rmetropolitana?pubdate=30&by=publicationtime",
@@ -372,40 +559,11 @@ var url_requests_ofertas = {
 	//"santander_oferta_individual" : "https://empleos.santander.cl/jobs/",
 }
 
-let regx = new class {
-	//Las palabras se podria pasar a un config o al storage para que sea dinamico y modificable desde js
-
-	expresion = cargos_baneados.join('|')
-	Ofertasregex = new RegExp(this.expresion, 'gium')
-
-	AciertosMatch(palabra, InputRegex) {
-		let regx_ = new RegExp(InputRegex, 'giu')
-		let respuesta = regx_.exec(palabra)
-
-		if (respuesta) {
-			return respuesta[0]
-		}
-	}
-
-	cargo_baneado(titulo) {
-		titulo = util.quitarAcentos(titulo)
-		let temp_regex = new RegExp(this.expresion, 'gium')
-		let respuesta = temp_regex.exec(titulo)
-		
-		//if respuesta == null, devolver el titulo convertido en unicode o algo asi
-
-
-		return respuesta != null
-	}
-}
-
-
-
-	// chrome.storage.local.getBytesInUse(function(Bytes){  
-	// 	mb = (Bytes / (1024*1024)).toFixed(2)
-	// 	document.getElementById("cantUso").innerText = `${mb} mb`
-	// 	console.log(Bytes)
-	// })		
+// chrome.storage.local.getBytesInUse(function(Bytes){  
+// 	mb = (Bytes / (1024*1024)).toFixed(2)
+// 	document.getElementById("cantUso").innerText = `${mb} mb`
+// 	console.log(Bytes)
+// })		
 
 
 /*
@@ -431,42 +589,44 @@ const modelo_imagen_compania = {
 }
 
 const modelo_oferta = {
-	id_compania: 0, 
-	id_oferta: 0,
-	cargo: "",
-	empresa: "",
-	localizacion_empleo: "",
-	fecha_publicacion: "",
+	id_compania: null, 
+	id_oferta: null,
+	cargo: null,
+	empresa: null,
+	localizacion_empleo: null,
+	fecha_publicacion: null,
 	cantidad_solicitudes: [],
-	descripcion_empleo: "",
-	link_externo_incripcion: "",
-	link_oferta: "",
-	tipo_jornada: "", //fulltime parttime etc
-	tipo_modalidad: "", //presencial hibrido online
-	tipo_contrato : "", //Proyecto temporal indefinido etc
-	fecha_recoleccion_registro: "",
-	pagina_recoleccion: "",
-	oferta_repetida: false,
-	nombre_publicador: "",
-	link_empresa: "",
-	aplicado: false,
-	tipo_solicitud: "",
-	info_empresa: "",
-	oferta_descartada: false,
-	coordenadas_empresa: "",
-	fecha_descarte: 0,
-	tipo_descarte: {},
-	esta_en_ingles: false,
-	salario : -1,
-	experiencia_minima : -1, // -1 en vez de 0, porque 0 es un valor valido
-	fecha_expiracion : 0,
+	descripcion_empleo: null,
+	link_externo_incripcion: null,
+	link_oferta: null,
+	tipo_jornada: null, //fulltime parttime etc
+	tipo_modalidad: null, //presencial hibrido online
+	tipo_contrato : null, //Proyecto temporal indefinido etc
+	fecha_recoleccion_registro: null,
+	pagina_recoleccion: null,
+	oferta_repetida: null,
+	nombre_publicador: null,
+	link_empresa: null,
+	aplicado: null,
+	tipo_solicitud: null,
+	info_empresa: null,
+	oferta_descartada: null,
+	coordenadas_empresa: null,
+	fecha_descarte: null,
+	tipo_descarte: null,
+	esta_en_ingles: null,
+	salario : null,
+	experiencia_minima : null, // -1 en vez de 0, porque 0 es un valor valido
+	fecha_expiracion : null,
 	preguntas_empleo : [],
-	rubro_empresa : "",
+	rubro_empresa : null,
 	aptitudes : [],
 	anos_experiencia : [], // Ordenar de menor a mayor
-	cantidad_vacantes : 0
+	cantidad_vacantes : null
 	
 }
+
+const ventanas_attached = [];
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	switch(message.type){
@@ -476,74 +636,119 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		case "DESCARTAR_OFERTA":
 			dao_almacenamiento.descartar_oferta_almacenada(message.id_oferta)
 			break;
+		case "BUSCAR_OFERTA":
+			let oferta = dao_almacenamiento.buscarOfertaPorId(message.id_oferta)
+			console.log(oferta)
+			break;
 	}
 });
 var urlList = [];
 //Al estar dentro de una funcion, los parametros con nombre dan error, ej: targer = {tabid : tabid}
-function adjuntar_debugger(tabId, sitio_url){
-	if(ventanas_attached.includes(tabId)){
-        console.log('El debugger ya se encuentra en la ventana', tabId)
+function adjuntar_debugger(tabId, sitio_url) {
+    if (ventanas_attached.includes(tabId)) {
+        console.log('El debugger ya se encuentra en la ventana', tabId);
         return;
     }
-	chrome.debugger.attach({tabId : tabId}, "1.3", () => {
-        chrome.debugger.sendCommand({tabId: tabId}, "Network.enable");
-		ventanas_attached.push(tabId)
-		
-		chrome.debugger.onEvent.addListener((Debuggee, message, params) => {
-
-			if (message === 'Network.responseReceived') {
-				if( params.response.status == 200 ){
-					
-					let domain = new URL(params.response.url).hostname // www.linkedin.com
-					if(url_requests_ofertas[domain] == undefined){
-						return;
-					}
-					
-					let url_encontrada = url_requests_ofertas[domain].find(e => params.response.url.startsWith(e.url))
-					if(url_encontrada != undefined){
-						request_Almacenar[params.requestId] = url_encontrada
-					}
-				}
-			}
-			if(message == 'Network.loadingFinished' && Object.keys(request_Almacenar).length > 0){
-				if(request_Almacenar[params.requestId] == undefined){
-					return;
-				}
-				//BUG ACA, Si una request llega varias veces, la primera sin body, las siguientes daran error de que no estan en la lista
-				if(request_Almacenar[params.requestId].no_body == true){
-					console.log("Request desde cache")
-					delete request_Almacenar[params.requestId];
-					return; //Ejecutar funcion especial aca
-				}
-				console.log(request_Almacenar,params.requestId)
-
-				chrome.debugger.sendCommand({tabId: Debuggee.tabId}, "Network.getResponseBody", {requestId: params.requestId}, (body , base64Encoded) => {
-					console.log(body, params.requestId)
-					try{
-						let temp_func = request_Almacenar[params.requestId].func
-						temp_func(body.body, Debuggee.tabId).then((resp) => {
-							delete request_Almacenar[params.requestId];
-						})
-					}catch(error){
-						console.error({message,error, request_Almacenar, params, body })
-						delete request_Almacenar[params.requestId];
-					}
-					
-				});
-			}
+    chrome.debugger.attach({ tabId: tabId }, "1.3", () => {
+        chrome.debugger.sendCommand({ tabId: tabId }, "Network.enable", () => {
+            ventanas_attached.push(tabId);
+			chrome.scripting.executeScript({
+				target : {tabId : tabId} ,
+				func :  util_html.AgregarVentanaDebugger,
+				args : [tabId]
+			})
 			
 
+        });
+    });    
+}
+let request_Almacenar = {};
+function handleDebuggerEvent(Debuggee, message, params) {
+	if (message === 'Network.responseReceived') {
+		if (params.response.status === 200) {
+			const domain = new URL(params.response.url).hostname; // www.linkedin.com
+			if (url_requests_ofertas[domain] === undefined) {
+				return;
+			}
+
+			const url_encontrada = url_requests_ofertas[domain].find(e => params.response.url.startsWith(e.url));
+			if (url_encontrada !== undefined) {
+				request_Almacenar[params.requestId] = url_encontrada;
+			}
+		}
+	}
+	if (message === 'Network.loadingFinished' && Object.keys(request_Almacenar).length > 0) {
+		if (request_Almacenar[params.requestId] === undefined) {
+			return;
+		}
+
+		// if (request_Almacenar[params.requestId].no_body === true) {
+		// 	console.log("Request desde cache");
+		// 	delete request_Almacenar[params.requestId];
+		// 	return; // Execute special function here
+		// }
+		console.log(request_Almacenar, params.requestId);
+
+		chrome.debugger.sendCommand({ tabId: Debuggee.tabId }, "Network.getResponseBody", { requestId: params.requestId }, (responseBody, base64Encoded) => {
+			console.log(responseBody, params.requestId);
+			try {
+				const temp_func = request_Almacenar[params.requestId].func;
+				const tiempo_llamado = (new Date()).getTime();
+
+				console.debug('Llamando la funcion', temp_func.name, ' a las ', tiempo_llamado);
+				let tiempo_ejecucion_funcion = performance.now();
+				
+				temp_func(responseBody.body, Debuggee.tabId).then((resp) => {
+					delete request_Almacenar[params.requestId];
+					let tiempo_termino_funcion = performance.now();
+					let diferencia_tiempo = (tiempo_termino_funcion - tiempo_ejecucion_funcion).toFixed(2)
+
+
+					chrome.scripting.executeScript({
+						target : {tabId : Debuggee.tabId} ,
+						func :  util_html.AgregarRequestProcesada,
+						args : [params.requestId, diferencia_tiempo, temp_func.name ]
+					})
+				});
+			} catch (error) {
+				console.error({ message, error, request_Almacenar, params, responseBody });
+				delete request_Almacenar[params.requestId];
+			}
 		});
-		
-    })
-	
-	
-	
+	}
 }
 
-chrome.debugger.onDetach.addListener((source, reason) => {
-    ventanas_attached.splice(ventanas_attached.indexOf(source.tabId) , 1)
-})
+//El addListener solo debe ser ejecutado una vez o se empezaran a acumular
+chrome.debugger.onEvent.addListener(handleDebuggerEvent);
+
+//el detach no funciona correctamente
+
+// function detachDebugger() {
+// 	Check if the tab still exists before detaching the debugger
+// 	chrome.tabs.get(tabId, (tab) => {
+// 		if (chrome.runtime.lastError || !tab) {
+// 			The tab doesn't exist, remove it from the attached list.
+// 			const index = ventanas_attached.indexOf(tabId);
+// 			if (index !== -1) {
+// 				ventanas_attached.splice(index, 1);
+// 			}
+// 		} else {
+// 			The tab still exists, detach the debugger.
+// 			chrome.debugger.detach({ tabId: tabId }, () => {
+// 				const index = ventanas_attached.indexOf(tabId);
+// 				if (index !== -1) {
+// 					ventanas_attached.splice(index, 1);
+// 				}
+// 				chrome.debugger.onEvent.removeListener(handleDebuggerEvent);
+// 			});
+// 		}
+// 	});
+// }
+// chrome.tabs.onRemoved.addListener((closedTabId) => {
+// 	if (closedTabId === tabId) {
+// 		detachDebugger();
+// 	}
+// });
 
 
 
@@ -591,16 +796,6 @@ agregar boton para hacer un embeed en la pagina actual, por si se cierra el debu
 agregar compatibilidad, el debugger sigue funcionando cuando se va a otra pagina que tambien se scrapea
 */
 
-
-
-
-/*
-Empresas a Descartar 
-revelo
-Oowlish
-Apiux Tecnologia
-
-*/
 
 
 

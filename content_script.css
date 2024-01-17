@@ -1,0 +1,54 @@
+:root {
+    --tamaño_maximo_top_request: 30px;
+  }
+  
+/*Agregar para que aparezca difente si la pantalla esta muy pequeña
+  Agregar que la lista de request cambie su tamaño si se clickeo previamente
+*/
+  #ventana_debugger_jobscrapper{
+      border: 1px solid black;
+        width: 150px;
+        font-size: 11px;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background-color: white;
+        z-index: 1;
+  }
+  
+  #ventana_debugger_jobscrapper  *{
+        font-size: 11px;
+  }
+  
+  #ventana_debugger_jobscrapper ul, li{
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+  }
+  
+  #ventana_debugger_jobscrapper button{
+      width: 100%;
+        
+        height: 18px;
+  }
+  .request_procesada{
+      max-height: var(--tamaño_maximo_top_request);
+        overflow: hidden;
+        border: 1px solid gray; 	
+  }
+  /* .top_request_procesada{
+    max-height: var(--tamaño_maximo_top_request);
+  } */
+
+  .request_procesada:hover{
+      max-height: none;
+  }
+
+  
+  
+  
+  
+.job-card-container__apply-method > div, .job-card-list__insight > div {display : none}
+.boton_descarte_oferta{position : absolute;top : 47px;right : 12px;}
+.boton_buscar_oferta{position : absolute;top : 80px;right : 12px;} 
+.ListaKeywords{display:flex}
