@@ -1,0 +1,242 @@
+<html>
+
+<head>
+
+
+    <meta charset=utf-8 />
+    <script src="../lib/Chart.js"></script>
+    <script src="../lib/sql-wasm.js"></script>
+    <script src="../lib/ace.js"></script>
+    <script src="../lib/mode-sql.js"></script>
+    <script src="../lib/sql.js"></script>
+    <script src="../lib/ext-language_tools.js"></script>
+
+</head>
+
+<body>
+    <div>
+        
+        <button page="1">1</button>
+        <button page="2">2</button>
+    
+    </div>
+
+    <div page="1">
+
+        <div id="top">
+            <pre>
+                id_compania INT,
+                id_oferta INT,
+                cargo VARCHAR(255),
+                empresa VARCHAR(255),
+                localizacion_empleo VARCHAR(255),
+                fecha_publicacion DATE,
+                cantidad_solicitudes INT,
+                descripcion_empleo TEXT,
+                link_externo_incripcion VARCHAR(255),
+                link_oferta VARCHAR(255),
+                tipo_jornada VARCHAR(50),
+                tipo_modalidad VARCHAR(50),
+                tipo_contrato VARCHAR(50),
+                fecha_recoleccion_registro DATE,
+                pagina_recoleccion VARCHAR(255),
+                oferta_repetida BOOLEAN,
+                nombre_publicador VARCHAR(255),
+                link_empresa VARCHAR(255),
+                aplicado BOOLEAN,
+                tipo_solicitud VARCHAR(50),
+                info_empresa TEXT,
+                oferta_descartada BOOLEAN,
+                coordenadas_empresa VARCHAR(50),
+                fecha_descarte DATE,
+                tipo_descarte VARCHAR(50),
+                esta_en_ingles BOOLEAN,
+                salario INT,
+                experiencia_minima INT,
+                fecha_expiracion DATE,
+                preguntas_empleo TEXT,
+                rubro_empresa VARCHAR(255),
+                aptitudes TEXT,
+                anos_experiencia INT,
+                cantidad_vacantes INT
+            
+            </pre>
+        
+        
+            <div id="editor"></div>
+        <button id="exec_sql">EXEC</button>
+
+        
+        
+        </div>
+
+          
+        
+        <table id="res_sql">
+            
+        </table>
+            
+        <button>Descargar a CSV</button>
+
+    </div>
+    
+    <div page="2">
+        <header>
+
+            <div >
+                <button class="boton_crear_grafico" tipo_grafico="bar">
+                    <svg class="icono_crear_grafico"  viewBox="0,0,2048,2048" focusable="false"><path type="path" class="OfficeIconColors_HighContrast" d="M 1963 1920 v 43 h -1878 v -1878 h 43 v 1835 h 171 v -1323 h 341 v 512 h 299 v 811 h 170 v -1067 h 299 v -640 h 341 v 1707 m -853 0 v -768 h -256 v 768 m 1067 0 v -1664 h -256 v 1664 z"></path><path type="path" class="OfficeIconColors_m20" d="M 1728 1941 h -299 v -1706 h 299 m -811 1706 h -298 v -810 h 298 z"></path><path type="path" class="OfficeIconColors_m26" d="M 619 1941 h -299 v -1322 h 299 z"></path><path type="path" class="OfficeIconColors_m25" d="M 640 1941 h -43 v -1301 h -256 v 1301 h -42 v -1344 h 341 z"></path><path type="path" class="OfficeIconColors_m21" d="M 1429 1941 h -298 v -1066 h 298 z"></path><path type="path" class="OfficeIconColors_m23" d="M 1432 896 h -280 v 1050 h -43 v -1093 h 323 z"></path><path type="path" class="OfficeIconColors_m22" d="M 1963 1920 v 43 h -1878 v -1878 h 43 v 1835 h 768 v -768 h -256 v -43 h 299 v 811 h 469 v -1707 h 341 v 1707 m -42 0 v -1664 h -256 v 1664 z"></path></svg>
+                </button>
+                <button class="boton_crear_grafico" tipo_grafico="line">
+                    <svg class="icono_crear_grafico" viewBox="0,0,2048,2048" focusable="false"><path type="path" class="OfficeIconColors_HighContrast" d="M 1963 1920 v 43 h -1878 v -1878 h 43 v 1165 l 574 -574 l 197 144 l 402 -402 l 361 360 l 263 -301 l 32 28 l -265 303 l 264 265 l -30 30 l -262 -263 l -317 362 l -444 -326 l -775 776 v 268 m 806 -1074 l 407 299 l 292 -335 l -332 -332 m -1173 832 v 281 l 740 -740 l -162 -119 z"></path><path type="path" class="OfficeIconColors_m24" d="M 122 1658 l -30 -30 l 1209 -1210 l 655 655 l -30 30 l -625 -625 z"></path><path type="path" class="OfficeIconColors_m22" d="M 1963 1920 v 43 h -1878 v -1878 h 43 v 1165 l 574 -574 l 639 469 l 584 -668 l 32 28 l -610 697 l -641 -470 l -578 578 v 610 z"></path></svg>
+                </button>
+
+                <button class="boton_crear_grafico" tipo_grafico="pie">
+                        <svg class="icono_crear_grafico" viewBox="0,0,2048,2048" focusable="false"><path type="path" class="OfficeIconColors_HighContrast" d="M 1024 85 q 129 0 249 33 q 120 34 225 95 q 104 62 190 147 q 85 86 147 190 q 61 105 95 225 q 33 120 33 249 q 0 130 -33 249 q -34 120 -95 224 q -62 105 -147 191 q -86 86 -190 147 q -105 61 -225 94 q -120 34 -249 34 q -130 0 -249 -34 q -120 -33 -224 -95 q -105 -61 -191 -147 q -86 -85 -147 -190 q -61 -104 -94 -224 q -34 -120 -34 -249 q 0 -126 32 -243 q 31 -117 89 -219 q 58 -102 140 -188 q 82 -85 182 -147 q 100 -62 217 -99 q 116 -37 243 -43 m -862 939 q 0 124 32 238 q 32 114 91 213 q 58 100 140 182 q 82 82 182 140 q 99 59 214 91 q 114 32 237 32 q 173 0 325 -61 q 151 -61 272 -167 l -638 -638 v -924 q -121 6 -230 41 q -109 35 -204 94 q -95 59 -172 140 q -78 81 -133 178 q -55 98 -85 209 q -31 112 -31 232 z"></path><path type="path" class="OfficeIconColors_m20" d="M 1941 1024 q 0 127 -32 244 q -33 117 -93 219 q -60 102 -143 185 q -84 84 -186 144 q -102 60 -219 92 q -117 33 -244 33 q -127 0 -244 -33 q -117 -32 -219 -92 q -102 -60 -185 -144 q -84 -83 -144 -185 q -60 -102 -92 -219 q -33 -117 -33 -244 q 0 -127 33 -244 q 32 -117 92 -219 q 60 -102 144 -186 q 83 -83 185 -143 q 102 -60 219 -93 q 117 -32 244 -32 q 127 0 244 32 q 117 33 219 93 q 102 60 186 143 q 83 84 143 186 q 60 102 93 219 q 32 117 32 244 z"></path><path type="path" class="OfficeIconColors_m22" d="M 1666 1709 q -127 118 -291 186 q -164 68 -351 68 q -130 0 -249 -34 q -120 -33 -224 -95 q -105 -61 -191 -147 q -86 -85 -147 -190 q -61 -104 -94 -224 q -34 -120 -34 -249 q 0 -128 33 -247 q 32 -118 92 -221 q 59 -103 143 -189 q 84 -85 186 -147 q 102 -61 220 -96 q 117 -35 244 -38 v 43 q -121 3 -233 36 q -112 34 -209 93 q -97 59 -177 140 q -80 81 -137 179 q -57 99 -88 212 q -31 113 -31 235 q 0 124 32 238 q 32 114 91 213 q 58 100 140 182 q 82 82 182 140 q 99 59 214 91 q 114 32 237 32 q 178 0 334 -65 q 156 -65 277 -177 z"></path><path type="path" class="OfficeIconColors_m26" d="M 1024 107 q 127 0 244 32 q 117 33 219 93 q 102 60 186 143 q 83 84 143 186 q 60 102 93 219 q 32 117 32 244 q 0 99 -20 192 q -21 94 -58 179 q -38 85 -92 160 q -54 75 -121 138 l -647 -648 v -937 q 5 0 11 -1 q 5 0 10 0 z"></path><path type="path" class="OfficeIconColors_m25" d="M 1024 85 q 129 0 249 33 q 120 34 225 95 q 104 62 190 147 q 85 86 147 190 q 61 105 95 225 q 33 120 33 249 q 0 104 -22 202 q -22 98 -62 187 q -41 89 -99 167 q -58 79 -130 143 q -9 -8 -15 -15 q -6 -6 -10 -11 q -5 -4 -5 -5 l -639 -638 v -969 m 670 1578 q 62 -61 112 -133 q 50 -72 85 -154 q 35 -81 54 -170 q 18 -88 18 -182 q 0 -123 -32 -238 q -32 -114 -90 -214 q -59 -99 -141 -181 q -82 -82 -181 -141 q -100 -58 -214 -90 q -115 -32 -238 -32 v 908 z"></path></svg>
+                </button>
+                
+            </div>
+
+
+            <input id="checkbox_interaccion_grafico"type="checkbox" />
+            <label for="checkbox_interaccion_grafico">Interactuar grafico y query</label>
+        
+        
+            
+        
+        </header>
+
+        
+
+
+        <div id="dashboard">
+            <div id="panel_graficos" class="board">
+                
+                <div class="chart_container">
+                    <canvas id="myChart" class="grafico"></canvas>    
+                </div>
+                
+            </div>
+
+
+            <div class="board">
+                
+                <li>
+                    <ul>
+                        <button class="boton_cambiar_panel" data-link="1">Panel 1</button>
+                    </ul>
+                    <ul>
+                        <button class="boton_cambiar_panel" data-link="2">Configuracion Grafico</button>
+                    </ul>
+                </li>
+
+                <div class="panel_sql active" data-id="1" >
+
+                    <input type="search" size="30" id="search_input" placeholder="Titulo Empleo"/>
+                    <button id="search_button">Buscar</button>
+                    <table id="results">
+                        <tr>
+                            <th>Company</th>
+                            <th>Contact</th>
+                            <th>Country</th>
+                            <th>Country</th>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="panel_sql" data-id="2" >
+                    <h1>Configuracion del grafico aca</h1>
+                    
+                    <div id="sub_header_configuracion_grafico">
+                        <div name="option">
+            
+                        </div>
+                        <div name="config">
+            
+                        </div>
+                        <div name="listeners">
+            
+                        </div>
+            
+                    </div>
+                </div>
+
+
+                
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript" src="panel_SQL.js" charset="utf-8"></script>
+    <script type="text/javascript" src="panel_dashboard.js" charset="utf-8"></script>
+
+
+    <style>
+        #top{
+            display: flex;
+        }
+
+        table, td, tr{
+            border : 1px solid black;
+            border-collapse: collapse;
+
+        }
+        table{
+            border-collapse: collapse;
+            
+            table-layout: fixed;
+        }
+
+        td {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+
+        #editor {
+            width: 100%;
+            height: 300px;
+        }
+        /*
+        div, nav {
+            border: 1px solid red; DEBUG
+        }*/
+        
+        #dashboard{
+            display: flex;
+        }
+        #results {
+           height: 100%; /* Adjust the height as needed */
+            overflow: auto;
+        }
+        .grafico_vacio{
+            border : 1px dashed red;
+        }
+        .icono_crear_grafico{
+            height: 24px;
+            width: 24px;
+        }
+       
+        .grafico:focus{
+            border: 1px solid blue;
+        }
+
+        .board{
+            width: 50%;
+            max-height: 100vh;
+        }
+        .panel_sql{
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .active{
+            display: block;
+            
+        }
+
+    </style>
+</body>
+</html>

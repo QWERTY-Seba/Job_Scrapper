@@ -1,0 +1,45 @@
+{
+  "name": "JobScrapper",
+  "version": "1",
+  "description": "",
+  "manifest_version": 3,
+  "author": "Seba",
+  "content_scripts": [
+      {
+        "matches": [
+          "https://www.linkedin.com/jobs/*",
+          "https://cl.computrabajo.com/*",
+          "http://localhost:5000/*"
+        ],
+        "js": ["content_script/gpt_content_script.js", "content_script/ui-componentes.js"],
+        "css": ["content_script/content_script.css"]
+      }
+  ],
+  "permissions": [
+    "background",
+    "debugger",
+    "storage",
+    "unlimitedStorage",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "downloads",
+    "offscreen"
+  ],
+  "action": {
+      "default_popup": "action.html",
+      "default_title": "_"
+  },
+  "background": {
+      "service_worker": "background/refactor_background.js",
+      "type": "module"
+  },
+  "host_permissions": [
+    "https://www.linkedin.com/jobs/*",
+    "https://cl.computrabajo.com/*",
+    "http://localhost:5000/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  }
+}
